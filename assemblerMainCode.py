@@ -1,4 +1,6 @@
-# ASSMEMBLER PROJECT
+# ASSEMBLER PROJECT
+# MANAS GUPTA
+# PRACHI GOYAL
 
 #Initializations
 opcodeSymbol = {}
@@ -9,11 +11,6 @@ literalTable={}
 pseudoOpcodes=['START','LTORG']
 byteCode=''
 
-# ASSMEMBLER PROJECT
-
-#Initializations
-opcodeSymbol = {}
-locationCount=0
 sg = 0;
 
 with open('sourceCode.txt','r') as fr:
@@ -67,10 +64,13 @@ with open('sourceCode.txt','r') as fr:
 			sg=1
 		
 		locationCount = locationCount + 1
+
+# REMOVE THIS LATER		
 print(literalTable)
 print(labelTable)
 print(symbolTable)
 
+# PASS TWO
 def registerAddress(reg):
 	reg = reg[2:]
 	reg = '0'*(6-len(reg))+reg
@@ -86,7 +86,6 @@ with open('symbolTable.txt','w') as f:
 	for i in symbolTable:
 		f.write(i+' '+ registerAddress(symbolTable[i][0])+' '+registerAddress(symbolTable[i][1]))
 
-# manas
 with open('opcodeSymbolTable.txt','r') as f:
 	for line in f:
 		tmp=line.split()
