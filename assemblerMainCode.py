@@ -71,22 +71,25 @@ print(literalTable)
 print(labelTable)
 print(symbolTable)
 
-# PASS TWO
-def registerAddress(reg):
+def regAddress(reg):
 	reg = reg[2:]
 	reg = '0'*(6-len(reg))+reg
 	return reg	
 
 with open('labelTable.txt','w') as f:
 	for i in labelTable:
-		f.write(i+' '+ registerAddress(labelTable[i]))
+		f.write(i[:-1]+' '+ regAddress(labelTable[i]))
 with open('literalTable.txt','w') as f:
 	for i in literalTable:
-		f.write(i+' '+ registerAddress(literalTable[i][0])+' '+registerAddress(literalTable[i][1]))
+		f.write(i+' '+ regAddress(literalTable[i][0])+' '+regAddress(literalTable[i][1]))
 with open('symbolTable.txt','w') as f:
 	for i in symbolTable:
-		f.write(i+' '+ registerAddress(symbolTable[i][0])+' '+registerAddress(symbolTable[i][1]))
+		f.write(i+' '+ regAddress(symbolTable[i][0])+' '+regAddress(symbolTable[i][1]))
 
+
+
+
+# PASS TWO
 with open('opcodeSymbolTable.txt','r') as f:
 	for line in f:
 		tmp=line.split()
@@ -99,7 +102,7 @@ with open('sourceCode.txt','r') as fr:
 with open ('symbolTable.txt','r') as f:
 	for line in f:
 		tmp=line.split()
-		symbolTable[tmp[0]]=[[tmp[1],tmp[2]]]
+		symbolTable[tmp[0]]=[tmp[1],tmp[2]]
 
 with open ('literalTable.txt','r') as f:
 	for line in f:
@@ -138,6 +141,13 @@ def isOperandImmediate(operand):
 def isOperandLiteral(operand):
 	try:
 		tmp=literalTable[operand]
+		return True
+	except:
+		return False
+
+def isOperandSymbol(operand):
+	try:
+		tmp=symbolTable[operand]
 		return True
 	except:
 		return False
@@ -212,8 +222,12 @@ with open('sourceCode.txt','r') as fr:
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+bin(tmp[1][1:])))
 						elif(isOperandRegister(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'10',registerAddress(tmp[1]))
+						elif(isOperandSymbol(tmp[1])):
+							# check [tmp[1]][1] i have printed address, not sure if symbol's value is to be printed
+							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',symbolTable[tmp[1]][1])
 						else:
-							pass
+							continue
+
 					fw.write(byteCode+'\n')
 					if(endFlag):
 						break
