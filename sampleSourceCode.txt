@@ -1,0 +1,17 @@
+@ Program for FACTORIAL of a number !
+@ updating Y with the result of factorial.
+@ STORING 1 IN Z.
+JOHN START 201
+INP X
+INP Y
+INP Z
+CLA
+LOOP: LAC Y
+MUL X
+SAC Y
+LAC X
+SUB Z
+SAC X
+BRP LOOP
+DSP Y
+STP
