@@ -77,11 +77,11 @@ def registerAddress(reg):
 	return reg	
 
 with open('labelTable.txt','w') as f:
-		for i in labelTable:
-			f.write(i+' '+ registerAddress(labelTable[i]))
-with open('literalTable.txt','w') as f:
 	for i in labelTable:
-		f.write(i+' '+ registerAddress(labelTable[i][0])+' '+registerAddress(labelTable[i][1]))
+		f.write(i+' '+ registerAddress(labelTable[i]))
+with open('literalTable.txt','w') as f:
+	for i in literalTable:
+		f.write(i+' '+ registerAddress(literalTable[i][0])+' '+registerAddress(literalTable[i][1]))
 with open('symbolTable.txt','w') as f:
 	for i in symbolTable:
 		f.write(i+' '+ registerAddress(symbolTable[i][0])+' '+registerAddress(symbolTable[i][1]))
