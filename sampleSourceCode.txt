@@ -1,21 +1,17 @@
 @ Program for FACTORIAL of a number !
 @ updating Y with the result of factorial.
 @ STORING 1 IN Z.
-JOHN START 201
+JSTART 201
 INP R1
 INP R2
 CLA
-LOOP: LAC Y
-MUL X
-SAC Y
-LAC X
+LOOP: LAC R2
+MUL R1
+SAC R2
+LAC R1
 SUB Z
-SAC X
+SAC R1
 BRP LOOP
-LAC Y
-ADD ='2'
-SAC Y
-DSP Y
 LTORG
 Z DC '1'
 LTORG
