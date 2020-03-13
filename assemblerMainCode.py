@@ -154,6 +154,14 @@ def isOperandRegister(operand):
 	else:
 		return False
 
+def checkIfLegalOpcode(opcode):
+	if(opcode not in opcodeSymbol):
+		raise Exception(opcode + ' is an ILLEGAL Opcode')
+
+def checkforLength(opcode):
+	if(opcode != 'CLA' and opcode != 'STP'):
+		raise Exception(opcode + ' requires 1 Operand')
+
 with open('sourceCode.txt','r') as fr:
 	with open('machineCode.txt','w') as fw:
 		for line in fr:
@@ -174,9 +182,14 @@ with open('sourceCode.txt','r') as fr:
 				if(check(tmp[0])):
 					continue
 				else:
+					checkIfLegalOpcode(tmp[0])
 					if(len(tmp)==1):
+						# length = 1 for CLA and STP only
+						checkforLength(tmp[0])
 						byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00','000000')
 					else:
+						if(len(tmp)!=2):
+							raise Exception("Too many operands !!")
 						if(isOperandLiteral(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',literalTable[tmp[1]])
 						elif(isOperandLabel(tmp[1])):
