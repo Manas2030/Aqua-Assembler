@@ -10,6 +10,7 @@ labelTable={}
 literalTable={}
 pseudoOpcodes=['START','LTORG']
 byteCode=''
+endFlag=False
 
 sg = 0;
 
@@ -158,9 +159,14 @@ def checkIfLegalOpcode(opcode):
 	if(opcode not in opcodeSymbol):
 		raise Exception(opcode + ' is an ILLEGAL Opcode')
 
-def checkforLength(opcode):
-	if(opcode != 'CLA' and opcode != 'STP'):
-		raise Exception(opcode + ' requires 1 Operand')
+def checkforCLAandSTP(opcode):
+	if(opcode == 'STP'):
+		global endFlag
+		endFlag=True
+		return True
+	if(opcode == 'CLA'):
+		return True
+	return False
 
 with open('sourceCode.txt','r') as fr:
 	with open('machineCode.txt','w') as fw:
@@ -178,6 +184,8 @@ with open('sourceCode.txt','r') as fr:
 				if(':' in tmp[0]):
 					tmp[0]=tmp[1]
 					tmp[1]=tmp[2]
+					# del tmp[2] because comparing length of tmp later
+					del tmp[2]
 				#check for directive statement
 				if(check(tmp[0])):
 					continue
@@ -185,11 +193,17 @@ with open('sourceCode.txt','r') as fr:
 					checkIfLegalOpcode(tmp[0])
 					if(len(tmp)==1):
 						# length = 1 for CLA and STP only
-						checkforLength(tmp[0])
-						byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00','000000')
+						if(checkforCLAandSTP(tmp[0])):
+							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00','000000')
+						else:
+							raise Exception(tmp[0] + ' requires 1 Operand')
 					else:
 						if(len(tmp)!=2):
-							raise Exception("Too many operands !!")
+							raise Exception("Too many operand(s) for "+tmp[0])
+
+						if(checkforCLAandSTP(tmp[0])):
+							raise Exception(tmp[0] + ' requires 0 Operands')
+
 						if(isOperandLiteral(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',literalTable[tmp[1]])
 						elif(isOperandLabel(tmp[1])):
@@ -201,3 +215,7 @@ with open('sourceCode.txt','r') as fr:
 						else:
 							pass
 					fw.write(byteCode+'\n')
+					if(endFlag):
+						break
+if(endFlag == False):
+	raise Exception('Program not ENDED. Use STP as well')
