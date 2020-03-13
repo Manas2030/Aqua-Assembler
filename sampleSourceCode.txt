@@ -2,9 +2,9 @@
 @ updating Y with the result of factorial.
 @ STORING 1 IN Z.
 JOHN START 201
-INP X
-INP Y
-INP Z
+INP R1
+INP R2
+INP R3
 CLA
 LOOP: LAC Y
 MUL X
