@@ -8,15 +8,21 @@ locationCount=0
 symbolTable={}
 labelTable={}
 literalTable={}
+opcodeTable=[]
 pseudoOpcodes=['START','LTORG']
 byteCode=''
 endFlag=False
 errorFlag=False
 usedChar=[]      #includes all literals, labels and symbols that have been used in the source code
+usedCharLC=[]
 declaredChar=[]	 #includes all literals, labels and symbols that have been declared in the source code
+declaredCharLC=[]
 registers=['R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12','R13','R14','R15','R16']
 checkLTORG = 0;
 checkSTP = 0;
+correctAlpha = ['a','b','c','d','e','f']
+incorrectAlpha = ['g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+
 
 #PASS ONE
 with open('opcodeSymbolTable.txt','r') as f:
@@ -34,7 +40,7 @@ with open('sourceCode.txt','r') as fr:
 
 		#check if comment
 		elif(tmp[0]=="@"):
-			pass
+			locationCount = locationCount-1
 		elif(tmp[0]=="STP"):                             #raises an error if STP used multiple times
 			if(checkSTP==0):
 				checkSTP = 1
@@ -45,68 +51,143 @@ with open('sourceCode.txt','r') as fr:
 		elif(tmp[0][-1]==":"):
 			labelTable[tmp[0]]= bin(locationCount)
 			declaredChar.append(tmp[0][:-1])
-
+		
 		#check for symbolTable
 		##decimal
 		elif(len(tmp)>1 and tmp[1]=="DC"):
-			symbolTable[tmp[0]] = [bin(int(tmp[2][1:-1])),bin(locationCount)]
-			declaredChar.append(tmp[0])
-			if(len(str(bin(int(tmp[2][1:-1]))))>6):       #raises error if binary value of symbol exceeds 6 bits
-				print("Word limit exceeded for "+tmp[0]+". 1 byte is 6 bits.")
+			sg = 0
+			for i in tmp[2][1:-1]:
+				if(i in correctAlpha or i in incorrectAlpha):
+					print("Value Error. "+ i +" present in decimal value. Error at locationCount: "+str(locationCount)+". Corrected Value taken as 0.")
+					sg = 1
+			if(sg==0):
+				symbolTable[tmp[0]] = [bin(int(tmp[2][1:-1])),bin(locationCount)]
+				declaredChar.append(tmp[0])
+				declaredCharLC.append(locationCount)
+				if(len(str(bin(int(tmp[2][1:-1])))[2:])>6):     #raises error if binary value of symbol exceeds 6 bits
+					print("Word limit exceeded for "+tmp[0]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+			else:
+				symbolTable[tmp[0]] = ['0b000000',bin(locationCount)]
+				declaredChar.append(tmp[0])
+				declaredCharLC.append(locationCount)		
 		##hexadecimal
 		elif(len(tmp)>1 and tmp[1]=="DS"):
-			symbolTable[tmp[0]] = [bin(int(tmp[2][1:-1],16)),bin(locationCount)]
-			declaredChar.append(tmp[0])
-			if(len(str(bin(int(tmp[2][1:-1],16))))>6):	#raises error if binary value of symbol exceeds 6 bits
-				print("Word limit exceeded for "+tmp[0]+". 1 byte is 6 bits.")
+			sg = 0
+			for i in tmp[2][1:-1]:
+				if(i in incorrectAlpha):
+					print("Value Error. "+ i +" present in hexadecimal value. Error at locationCount: "+str(locationCount)+". Corrected Value taken as 0.")
+					sg = 1
+			if(sg==0):	
+				symbolTable[tmp[0]] = [bin(int(tmp[2][1:-1],16)),bin(locationCount)]
+				declaredChar.append(tmp[0])
+				declaredCharLC.append(locationCount)
+				if(len(str(bin(int(tmp[2][1:-1],16)))[2:])>6):	#raises error if binary value of symbol exceeds 6 bits
+					print("Word limit exceeded for "+tmp[0]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+			else:
+				symbolTable[tmp[0]] = ['0b000000',bin(locationCount)]
+				declaredChar.append(tmp[0])
+				declaredCharLC.append(locationCount)
+		
 				
 		#check for literalTable
 		if(checkLTORG==1):
 			if(tmp[min(1,len(tmp)-1)][1]=="h"):
-				literalTable[tmp[1]] = [bin(int(tmp[1][3:-1],16)),bin(locationCount)]
-				declaredChar.append(tmp[1])
-				if(len(str(bin(int(tmp[1][3:-1],16))))>6):	#raises error if binary value of literal exceeds 6 bits
-					print("Word limit exceeded for "+tmp[1]+". 1 byte is 6 bits.")
+				sg = 0
+				for i in tmp[1][3:-1]:
+					if(i in incorrectAlpha):
+						print("Value Error. "+ i +" present in hexadecimal value. Error at locationCount: "+str(locationCount)+". Corrected Value taken as 0.")
+						sg = 1
+				if(sg==0):		
+					literalTable[tmp[1]] = [bin(int(tmp[1][3:-1],16)),bin(locationCount)]
+					declaredChar.append(tmp[1])
+					declaredCharLC.append(locationCount)
+					if(len(str(bin(int(tmp[1][3:-1],16)))[2:])>6):		#raises error if binary value of symbol exceeds 6 bits
+						print("Word limit exceeded for "+tmp[1]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+				else:
+					literalTable[tmp[1]] = ['0b000000',bin(locationCount)]
+					declaredChar.append(tmp[1])
+					declaredCharLC.append(locationCount)		
 			
 			elif(tmp[min(1,len(tmp)-1)][1]=="'" or tmp[min(1,len(tmp)-1)][1]=="d"):
 				if(tmp[1][1]=="d"):
-					literalTable[tmp[1]] = [bin(int(tmp[1][3:-1])),bin(locationCount)]
-					declaredChar.append(tmp[1])
-					if(len(str(bin(int(tmp[1][3:-1]))))>6):		#raises error if binary value of literal exceeds 6 bits
-						print("Word limit exceeded for "+tmp[1]+". 1 byte is 6 bits.")
-
+					sg = 0
+					for i in tmp[1][3:-1]:
+						if(i in incorrectAlpha or i in correctAlpha):
+							print("Value Error. "+ i +" present in hexadecimal value. Error at locationCount: "+str(locationCount)+". Corrected Value taken as 0.")
+							sg = 1
+					if(sg==0):
+						literalTable[tmp[1]] = [bin(int(tmp[1][3:-1])),bin(locationCount)]
+						declaredChar.append(tmp[1])
+						declaredCharLC.append(locationCount)
+						if(len(str(bin(int(tmp[1][3:-1])))[2:])>6):		#raises error if binary value of symbol exceeds 6 bits
+							print("Word limit exceeded for "+tmp[1]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+					else:
+						literalTable[tmp[1]] = ['0b000000',bin(locationCount)]
+						declaredChar.append(tmp[1])
+						declaredCharLC.append(locationCount)
 				else:
-					literalTable[tmp[1]] = [bin(int(tmp[1][2:-1])),bin(locationCount)]
-					declaredChar.append(tmp[1])
-					if(len(str(bin(int(tmp[1][2:-1]))))>6):		#raises error if binary value of literal exceeds 6 bits
-						print("Word limit exceeded for "+tmp[1]+". 1 byte is 6 bits.")
+					sg = 0
+					for i in tmp[1][2:-1]:
+						if(i in incorrectAlpha or i in correctAlpha):
+							print("Value Error. "+ i +" present in hexadecimal value. Error at locationCount: "+str(locationCount)+". Corrected Value taken as 0.")
+							sg = 1
+					if(sg==0):
+						literalTable[tmp[1]] = [bin(int(tmp[1][2:-1])),bin(locationCount)]
+						declaredChar.append(tmp[1])
+						declaredCharLC.append(locationCount)
+						if(len(str(bin(int(tmp[1][2:-1])))[2:])>6):		#raises error if binary value of symbol exceeds 6 bits
+							print("Word limit exceeded for "+tmp[1]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+					else:
+						literalTable[tmp[1]] = ['0b000000',bin(locationCount)]
+						declaredChar.append(tmp[1])
+						declaredCharLC.append(locationCount)
+
 			else:
-			 checkLTORG = 0
-			
-		
-		elif(tmp[0]=="LTORG"):
-			checkLTORG=1
+				checkLTORG = 0
 
 		#updating the usedChar list
-		elif(len(tmp)>1 and (((tmp[0] in opcodeSymbol.keys()) and (tmp[0]!='CLA')  and (tmp[1] not in registers)) or (len(tmp)>2 and (tmp[1] in opcodeSymbol.keys()) and (tmp[1]!='CLA')  and (tmp[2] not in registers)))):
-			if(tmp[0] in opcodeSymbol.keys()): 	
-				usedChar.append(tmp[1])         
+		elif(len(tmp)>1 and (((tmp[0] in opcodeSymbol.keys()) and (tmp[0]!='CLA')) or (len(tmp)>2 and (tmp[1] in opcodeSymbol.keys()) and (tmp[1]!='CLA')))):
+			if(tmp[0] in opcodeSymbol.keys()): 
+				opcodeTable.append([tmp[0],opcodeSymbol[tmp[0]],tmp[1],'2'])
+				if(tmp[1] not in registers  and (tmp[1][0]!='#')):
+					usedChar.append(tmp[1])
+					usedCharLC.append(locationCount)
 			else:
-				usedChar.append(tmp[2])
-		
-		locationCount = locationCount + 1 #set LC value
-		if(locationCount>63):             #LC value cannot exceed 63 as 6 bits assigned for memory address
-			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64.')
+				opcodeTable.append([tmp[1],opcodeSymbol[tmp[1]],tmp[2],'2'])
+				if(tmp[2] not in registers  and (tmp[2][0]!='#')):
+					usedChar.append(tmp[2])
+					usedCharLC.append(locationCount)
+
+		elif((len(tmp)>1 and tmp[1]=='CLA') or tmp[0]=='CLA'):
+			if(tmp[0]=='CLA'):
+				opcodeTable.append([tmp[0],opcodeSymbol[tmp[0]],'','1','2'])
+			else:
+				opcodeTable.append([tmp[1],opcodeSymbol[tmp[1]],'','1','2'])	
+		locationCount = locationCount + 1	#set LC value
+		if(locationCount>64):		#LC value cannot exceed 63 as 6 bits assigned for memory address
+			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64. Error at locationCount: '+str(locationCount))
+
 
 #check if a symbol/literal/label hasn't been declared/initialized
+j=-1
 for i in usedChar:
+	j = j+1
 	if(i not in declaredChar):
-		print("Declaration error. "+i+" not initialized.")
-		
-#check if a symbol/literal/label has been declared/initialized multiple times		
-for i in range(len(declaredChar)-1):
-	if(declaredChar[i] in declaredChar[i+1:]):
-		print("Declaration error. "+declaredChar[i]+" initialized multiple times.")	
+		print("Declaration error. "+i+" not initialized. Error at locationCount: "+str(usedCharLC[j]))
+
+#check if a symbol/literal/label has been declared/initialized multiple times	
+n = len(declaredChar)
+for i in range(1,n):
+	if(declaredChar[i] in declaredChar[:i]):
+		print("Declaration error. "+declaredChar[i]+" initialized multiple times. Error at locationCount: "+str(declaredCharLC[i]))			
+
+# REMOVE THIS LATER		
+print(literalTable)
+print(labelTable)
+print(symbolTable)
+print(usedChar)
+print(declaredChar)
+print(opcodeTable)	
 				
 def regAddress(reg): 
 	'''function to make a binary value 6 bit long'''
