@@ -15,6 +15,11 @@ errorFlag=False
 
 sg = 0;
 
+with open('opcodeSymbolTable.txt','r') as f:
+	for line in f:
+		tmp=line.split()
+		opcodeSymbol[tmp[0]]=tmp[1]
+
 with open('sourceCode.txt','r') as fr:
 	for line in fr:
 		tmp = line.split()
@@ -91,10 +96,6 @@ with open('symbolTable.txt','w') as f:
 
 
 # PASS TWO
-with open('opcodeSymbolTable.txt','r') as f:
-	for line in f:
-		tmp=line.split()
-		opcodeSymbol[tmp[0]]=tmp[1]
 
 with open('sourceCode.txt','r') as fr:
 	with open('machineCode.txt','w') as fw:
@@ -226,7 +227,12 @@ with open('sourceCode.txt','r') as fr:
 						elif(isOperandLabel(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',labelTable[tmp[1]])
 						elif(isOperandImmediate(tmp[1])):
-							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+bin(tmp[1][1:])))
+							immediateValue=int(tmp[1][1:])
+							if(tmp[0]=='DIV' and immediateValue==0):
+								print('Zero Division Error')
+								errorFlag=True
+							else:
+								byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+str(immediateValue)))
 						elif(isOperandRegister(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'10',registerAddress(tmp[1]))
 						elif(isOperandSymbol(tmp[1])):
