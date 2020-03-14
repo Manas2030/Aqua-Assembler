@@ -95,7 +95,7 @@ with open('sourceCode.txt','r') as fr:
 				usedChar.append(tmp[2])
 		
 		locationCount = locationCount + 1 #set LC value
-		if(locationCount>64):             #LC value cannot exceed 64 as 6 bits assigned for memory address
+		if(locationCount>63):             #LC value cannot exceed 63 as 6 bits assigned for memory address
 			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64.')
 
 #check if a symbol/literal/label hasn't been declared/initialized
