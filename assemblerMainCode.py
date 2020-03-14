@@ -11,6 +11,7 @@ literalTable={}
 pseudoOpcodes=['START','LTORG']
 byteCode=''
 endFlag=False
+errorFlag=False
 
 sg = 0;
 
@@ -203,22 +204,22 @@ with open('sourceCode.txt','r') as fr:
 					continue
 				else:
 					if(checkIllegalOpcode(tmp[0])):
-						bytcode=' '
+						errorFlag=True
 					if(len(tmp)==1):
 						# length = 1 for CLA and STP only
 						if(checkforCLAandSTP(tmp[0])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00','000000')
 						else:
 							print(tmp[0] + ' requires 1 Operand')
-							byteCode=' '
+							errorFlag=True
 					else:
 						if(len(tmp)!=2):
 							print("Too many operand(s) for "+tmp[0])
-							byteCode=' '
+							errorFlag=True
 
 						if(checkforCLAandSTP(tmp[0])):
 							print(tmp[0] + ' requires 0 Operands')
-							byteCode=' '
+							errorFlag=True
 
 						if(isOperandLiteral(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',literalTable[tmp[1]])
@@ -233,7 +234,13 @@ with open('sourceCode.txt','r') as fr:
 						else:
 							continue
 
+					if(errorFlag):
+						global bytecode
+
+						byteCode = ' '
+						errorFlag=False
+
 					fw.write(byteCode+'\n')
 					
 if(endFlag == False):
-	print('Assembly Program not ENDED. Use STP as well')
+	print('END statement missing. Use STP as well')
