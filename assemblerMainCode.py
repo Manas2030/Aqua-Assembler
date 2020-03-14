@@ -12,9 +12,15 @@ pseudoOpcodes=['START','LTORG']
 byteCode=''
 endFlag=False
 errorFlag=False
+usedChar=[]      #includes all literals, labels and symbols that have been used in the source code
+declaredChar=[]	 #includes all literals, labels and symbols that have been declared in the source code
+numberOfLines=0  #number of imperative statements and assembler directives in source code
+registers=['R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12','R13','R14','R15','R16']
+checkLTORG = 0;
+checkLines = 0; 
+checkSTP = 0;
 
-sg = 0;
-
+#PASS ONE
 with open('opcodeSymbolTable.txt','r') as f:
 	for line in f:
 		tmp=line.split()
@@ -26,74 +32,107 @@ with open('sourceCode.txt','r') as fr:
 
 		#set val of LC
 		if(tmp[0]=="START"):
-			locationCount = int(tmp[1])
+			locationCount = int(tmp[1])       	 #initialize the value of LC 
+			if(checkLines==0):	           
+				numberOfLines = 0;		 #start a counter for the number of intructions
+				checkLines = 1
 
 		#check if comment
 		elif(tmp[0]=="@"):
 			pass
-		elif(tmp[0]=="STP"):
-			pass
+		elif(tmp[0]=="STP"):                             #raises an error if STP used multiple times
+			if(checkSTP==0):
+				checkSTP = 1
+			else:
+				print("Declarative statement error. STP used multiple times.")	
 
 		#check for labelTable
 		elif(tmp[0][-1]==":"):
 			labelTable[tmp[0]]= bin(locationCount)
-		
+			declaredChar.append(tmp[0][:-1])
 
 		#check for symbolTable
 		##decimal
-		elif(tmp[min(1,len(tmp)-1)]=="DC"):
-
+		elif(len(tmp)>1 and tmp[1]=="DC"):
 			symbolTable[tmp[0]] = [bin(int(tmp[2][1:-1])),bin(locationCount)]
-		
+			declaredChar.append(tmp[0])
+			if(len(str(bin(int(tmp[2][1:-1]))))>6):       #raises error if binary value of symbol exceeds 6 bits
+				print("Word limit exceeded for "+tmp[0]+". 1 byte is 6 bits.")
 		##hexadecimal
-		elif(tmp[min(1,len(tmp)-1)]=="DS"):
+		elif(len(tmp)>1 and tmp[1]=="DS"):
 			symbolTable[tmp[0]] = [bin(int(tmp[2][1:-1],16)),bin(locationCount)]
-		
-
+			declaredChar.append(tmp[0])
+			if(len(str(bin(int(tmp[2][1:-1],16))))>6):	#raises error if binary value of symbol exceeds 6 bits
+				print("Word limit exceeded for "+tmp[0]+". 1 byte is 6 bits.")
+				
 		#check for literalTable
-		if(sg==1):
+		if(checkLTORG==1):
 			if(tmp[min(1,len(tmp)-1)][1]=="h"):
 				literalTable[tmp[1]] = [bin(int(tmp[1][3:-1],16)),bin(locationCount)]
+				declaredChar.append(tmp[1])
+				if(len(str(bin(int(tmp[1][3:-1],16))))>6):	#raises error if binary value of literal exceeds 6 bits
+					print("Word limit exceeded for "+tmp[1]+". 1 byte is 6 bits.")
 			
 			elif(tmp[min(1,len(tmp)-1)][1]=="'" or tmp[min(1,len(tmp)-1)][1]=="d"):
 				if(tmp[1][1]=="d"):
 					literalTable[tmp[1]] = [bin(int(tmp[1][3:-1])),bin(locationCount)]
-				
+					declaredChar.append(tmp[1])
+					if(len(str(bin(int(tmp[1][3:-1]))))>6):		#raises error if binary value of literal exceeds 6 bits
+						print("Word limit exceeded for "+tmp[1]+". 1 byte is 6 bits.")
+
 				else:
 					literalTable[tmp[1]] = [bin(int(tmp[1][2:-1])),bin(locationCount)]
-				
-			
+					declaredChar.append(tmp[1])
+					if(len(str(bin(int(tmp[1][2:-1]))))>6):		#raises error if binary value of literal exceeds 6 bits
+						print("Word limit exceeded for "+tmp[1]+". 1 byte is 6 bits.")
 			else:
-			 sg = 0
+			 checkLTORG = 0
 			
 		
 		elif(tmp[0]=="LTORG"):
-			sg=1
+			checkLTORG=1
+
+		#updating the usedChar list
+		elif(len(tmp)>1 and (((tmp[0] in opcodeSymbol.keys()) and (tmp[0]!='CLA')  and (tmp[1] not in registers)) or (len(tmp)>2 and (tmp[1] in opcodeSymbol.keys()) and (tmp[1]!='CLA')  and (tmp[2] not in registers)))):
+			if(tmp[0] in opcodeSymbol.keys()): 	
+				usedChar.append(tmp[1])         
+			else:
+				usedChar.append(tmp[2])
 		
-		locationCount = locationCount + 1
+		locationCount = locationCount + 1 #set LC value
+		numberOfLines = numberOfLines + 1
+		if(numberOfLines>64):
+			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64.')
 
-# REMOVE THIS LATER		
-print(literalTable)
-print(labelTable)
-print(symbolTable)
-
-def regAddress(reg):
+#check if a symbol/literal/label hasn't been declared/initialized
+for i in usedChar:
+	if(i not in declaredChar):
+		print("Declaration error. "+i+" not initialized.")
+		
+#check if a symbol/literal/label has been declared/initialized multiple times		
+for i in range(len(declaredChar)-1):
+	if(declaredChar[i] in declaredChar[i+1:]):
+		print("Declaration error. "+declaredChar[i]+" initialized multiple times.")	
+				
+def regAddress(reg): 
+	'''function to make a binary value 6 bit long'''
 	reg = reg[2:]
 	reg = '0'*(6-len(reg))+reg
 	return reg	
 
+#creating labelTable
 with open('labelTable.txt','w') as f:
 	for i in labelTable:
 		f.write(i[:-1]+' '+ regAddress(labelTable[i]))
+#creating literalTable		
 with open('literalTable.txt','w') as f:
 	for i in literalTable:
 		f.write(i+' '+ regAddress(literalTable[i][0])+' '+regAddress(literalTable[i][1]))
+		
+#creating symbolTable		
 with open('symbolTable.txt','w') as f:
 	for i in symbolTable:
 		f.write(i+' '+ regAddress(symbolTable[i][0])+' '+regAddress(symbolTable[i][1]))
-
-
-
 
 # PASS TWO
 
