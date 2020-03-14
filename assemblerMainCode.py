@@ -14,10 +14,8 @@ endFlag=False
 errorFlag=False
 usedChar=[]      #includes all literals, labels and symbols that have been used in the source code
 declaredChar=[]	 #includes all literals, labels and symbols that have been declared in the source code
-numberOfLines=0  #number of imperative statements and assembler directives in source code
 registers=['R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12','R13','R14','R15','R16']
 checkLTORG = 0;
-checkLines = 0; 
 checkSTP = 0;
 
 #PASS ONE
@@ -33,9 +31,6 @@ with open('sourceCode.txt','r') as fr:
 		#set val of LC
 		if(tmp[0]=="START"):
 			locationCount = int(tmp[1])       	 #initialize the value of LC 
-			if(checkLines==0):	           
-				numberOfLines = 0;		 #start a counter for the number of intructions
-				checkLines = 1
 
 		#check if comment
 		elif(tmp[0]=="@"):
@@ -100,8 +95,7 @@ with open('sourceCode.txt','r') as fr:
 				usedChar.append(tmp[2])
 		
 		locationCount = locationCount + 1 #set LC value
-		numberOfLines = numberOfLines + 1
-		if(numberOfLines>64):
+		if(locationCount>64):             #LC value cannot exceed 64 as 6 bits assigned for memory address
 			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64.')
 
 #check if a symbol/literal/label hasn't been declared/initialized
