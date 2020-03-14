@@ -165,9 +165,11 @@ def isOperandRegister(operand):
 	else:
 		return False
 
-def checkIfLegalOpcode(opcode):
+def checkIllegalOpcode(opcode):
 	if(opcode not in opcodeSymbol):
-		raise Exception(opcode + ' is an ILLEGAL Opcode')
+		print(opcode + ' is an ILLEGAL Opcode')
+		return True
+	return False
 
 def checkforCLAandSTP(opcode):
 	if(opcode == 'STP'):
@@ -200,19 +202,23 @@ with open('sourceCode.txt','r') as fr:
 				if(check(tmp[0])):
 					continue
 				else:
-					checkIfLegalOpcode(tmp[0])
+					if(checkIllegalOpcode(tmp[0])):
+						bytcode=' '
 					if(len(tmp)==1):
 						# length = 1 for CLA and STP only
 						if(checkforCLAandSTP(tmp[0])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00','000000')
 						else:
-							raise Exception(tmp[0] + ' requires 1 Operand')
+							print(tmp[0] + ' requires 1 Operand')
+							byteCode=' '
 					else:
 						if(len(tmp)!=2):
-							raise Exception("Too many operand(s) for "+tmp[0])
+							print("Too many operand(s) for "+tmp[0])
+							byteCode=' '
 
 						if(checkforCLAandSTP(tmp[0])):
-							raise Exception(tmp[0] + ' requires 0 Operands')
+							print(tmp[0] + ' requires 0 Operands')
+							byteCode=' '
 
 						if(isOperandLiteral(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',literalTable[tmp[1]])
@@ -223,13 +229,11 @@ with open('sourceCode.txt','r') as fr:
 						elif(isOperandRegister(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'10',registerAddress(tmp[1]))
 						elif(isOperandSymbol(tmp[1])):
-							# check [tmp[1]][1] i have printed address, not sure if symbol's value is to be printed
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',symbolTable[tmp[1]][1])
 						else:
 							continue
 
 					fw.write(byteCode+'\n')
-					if(endFlag):
-						break
+					
 if(endFlag == False):
-	raise Exception('Program not ENDED. Use STP as well')
+	print('Assembly Program not ENDED. Use STP as well')
