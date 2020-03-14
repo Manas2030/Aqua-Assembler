@@ -130,10 +130,6 @@ with open('symbolTable.txt','w') as f:
 
 # PASS TWO
 
-with open('sourceCode.txt','r') as fr:
-	with open('machineCode.txt','w') as fw:
-		pass
-
 with open ('symbolTable.txt','r') as f:
 	for line in f:
 		tmp=line.split()
@@ -215,9 +211,12 @@ def checkforCLAandSTP(opcode):
 		return True
 	return False
 
+locationCount=0
+
 with open('sourceCode.txt','r') as fr:
 	with open('machineCode.txt','w') as fw:
 		for line in fr:
+			locationCount+=1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
 			if(line == ''):
 				continue
 			#check for comment line
@@ -239,19 +238,27 @@ with open('sourceCode.txt','r') as fr:
 				else:
 					if(checkIllegalOpcode(tmp[0])):
 						errorFlag=True
+					if(errorFlag):
+						fw.write(' '+'\n')
+						errorFlag=False
+						continue
+
 					if(len(tmp)==1):
 						# length = 1 for CLA and STP only
 						if(checkforCLAandSTP(tmp[0])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00','000000')
 						else:
+							print('ERROR at line: '+ str(locationCount))
 							print(tmp[0] + ' requires 1 Operand')
 							errorFlag=True
 					else:
 						if(len(tmp)!=2):
+							print('ERROR at line: '+ str(locationCount))
 							print("Too many operand(s) for "+tmp[0])
 							errorFlag=True
 
 						if(checkforCLAandSTP(tmp[0])):
+							print('ERROR at line: '+ str(locationCount))
 							print(tmp[0] + ' requires 0 Operands')
 							errorFlag=True
 
@@ -262,24 +269,34 @@ with open('sourceCode.txt','r') as fr:
 						elif(isOperandImmediate(tmp[1])):
 							immediateValue=int(tmp[1][1:])
 							if(tmp[0]=='DIV' and immediateValue==0):
+								print('ERROR at line: '+ str(locationCount))
 								print('Zero Division Error')
 								errorFlag=True
 							else:
 								byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+str(immediateValue)))
-						elif(isOperandRegister(tmp[1])):
-							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'10',registerAddress(tmp[1]))
 						elif(isOperandSymbol(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',symbolTable[tmp[1]][1])
+						# check operand for register in the last because symbol(or anything) could start with 'R'...	
+						elif(isOperandRegister(tmp[1])):
+							try:
+								registerNum=int(tmp[1][1:])
+								if(registerNum<0 or registerNum>31):
+									print('ERROR at line: '+ str(locationCount))
+									print('Register Number should be between 0 to 31 (inclusive)')
+							except:
+								errorFlag=True 
+							else:
+								byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'10',registerAddress(tmp[1]))
 						else:
 							continue
 
 					if(errorFlag):
 						global bytecode
-
 						byteCode = ' '
 						errorFlag=False
 
 					fw.write(byteCode+'\n')
 					
 if(endFlag == False):
+	print('ERROR at line: '+ str(locationCount))
 	print('END statement missing. Use STP as well')
