@@ -1,7 +1,7 @@
 @ Program for FACTORIAL of a number !
 @ updating Y with the result of factorial.
 @ STORING 1 IN Z.
-START 201
+START 21
 INP R1
 INP R2
 CLA
