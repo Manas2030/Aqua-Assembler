@@ -13,6 +13,7 @@ opcodeTable=[]
 pseudoOpcodes=['START','LTORG','DS','DC']
 byteCode=''
 endFlag=False
+startFlag=False
 errorFlag=False
 usedChar=[]      #includes all literals, labels and symbols that have been used in the source code
 usedCharLC=[]
@@ -33,15 +34,28 @@ with open('opcodeSymbolTable.txt','r') as f:
 
 with open('sourceCode.txt','r') as fr:
 	for line in fr:
+		line=line.strip()
+		if(len(line)==0):
+			continue
 		tmp = line.split()
 
 		#set val of LC
 		if(tmp[0]=="START"):
-			if(len(tmp)==1):
-				locationCount = 0
+			if(startFlag):
+				print('ERROR at line: '+ str(locationCount))
+				print('START already used, cannot initialize Location counter again')
+				locationCount-=1
 			else:
-				locationCount = int(tmp[1])       	 #initialize the value of LC 
-
+				if(len(tmp)==1):
+					locationCount = 0
+				else:
+					locationCount = int(tmp[1])       	 #initialize the value of LC 
+					if(locationCount>31):
+						locationCount=0
+						print('ERROR at line: '+ str(locationCount))
+						print('Exceeded memory limit. Location counter cannot start from 31.')
+						locationCount-=1
+				startFlag=True
 		#check if comment
 		elif(tmp[0]=="@"):
 			locationCount = locationCount-1
@@ -50,7 +64,8 @@ with open('sourceCode.txt','r') as fr:
 			if(checkSTP==0):
 				checkSTP = 1
 			else:
-				print("Declarative statement error. STP used multiple times. Error at locationCount: "+locationCount)	
+				print("Declarative statement error. STP used multiple times. Error at locationCount: "+str(locationCount))
+				locationCount-=1	
 
 		#check for labelTable
 		elif(tmp[0][-1]==":"):
@@ -72,6 +87,7 @@ with open('sourceCode.txt','r') as fr:
 				declaredCharLC.append(locationCount)
 				if(len(str(bin(int(tmp[2][1:-1])))[2:])>6):     #raises error if binary value of symbol exceeds 6 bits
 					print("Word limit exceeded for "+tmp[0]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+					locationCount-=1
 			else:
 				symbolTable[tmp[0]] = ['0b000000',bin(locationCount)]
 				declaredChar.append(tmp[0])
@@ -89,6 +105,7 @@ with open('sourceCode.txt','r') as fr:
 				declaredCharLC.append(locationCount)
 				if(len(str(bin(int(tmp[2][1:-1],16)))[2:])>6):	#raises error if binary value of symbol exceeds 6 bits
 					print("Word limit exceeded for "+tmp[0]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+					locationCount-=1
 			else:
 				symbolTable[tmp[0]] = ['0b000000',bin(locationCount)]
 				declaredChar.append(tmp[0])
@@ -109,6 +126,7 @@ with open('sourceCode.txt','r') as fr:
 					declaredCharLC.append(locationCount)
 					if(len(str(bin(int(tmp[1][3:-1],16)))[2:])>6):		#raises error if binary value of symbol exceeds 6 bits
 						print("Word limit exceeded for "+tmp[1]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+						locationCount-=1
 				else:
 					literalTable[tmp[1]] = ['0b000000',bin(locationCount)]
 					declaredChar.append(tmp[1])
@@ -127,6 +145,7 @@ with open('sourceCode.txt','r') as fr:
 						declaredCharLC.append(locationCount)
 						if(len(str(bin(int(tmp[1][3:-1])))[2:])>6):		#raises error if binary value of symbol exceeds 6 bits
 							print("Word limit exceeded for "+tmp[1]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+							locationCount-=1
 					else:
 						literalTable[tmp[1]] = ['0b000000',bin(locationCount)]
 						declaredChar.append(tmp[1])
@@ -143,11 +162,14 @@ with open('sourceCode.txt','r') as fr:
 						declaredCharLC.append(locationCount)
 						if(len(str(bin(int(tmp[1][2:-1])))[2:])>6):		#raises error if binary value of symbol exceeds 6 bits
 							print("Word limit exceeded for "+tmp[1]+". Given literal can't be represented in 6 bits. Error at locationCount: "+str(locationCount))
+							locationCount-=1
 					else:
 						literalTable[tmp[1]] = ['0b000000',bin(locationCount)]
 						declaredChar.append(tmp[1])
 						declaredCharLC.append(locationCount)
-
+			elif(tmp[0]=='LTORG'):
+				print("Declarative statement error. LTORG used multiple times. Error at locationCount: "+str(locationCount))
+				locationCount-=1
 			else:
 				checkLTORG = 0
 
@@ -185,15 +207,8 @@ for i in range(1,n):
 	if(declaredChar[i] in declaredChar[:i]):
 		print("Declaration error. "+declaredChar[i]+" initialized multiple times. Error at locationCount: "+str(declaredCharLC[i]))			
 
-# REMOVE THIS LATER		
-print(literalTable)
-print(labelTable)
-print(symbolTable)
-print(usedChar)
-print(declaredChar)
-print(opcodeTable)	
 				
-def regAddress(reg): 
+def addZeroes(reg): 
 	'''function to make a binary value 6 bit long'''
 	reg = reg[2:]
 	reg = '0'*(6-len(reg))+reg
@@ -202,16 +217,16 @@ def regAddress(reg):
 #creating labelTable
 with open('labelTable.txt','w') as f:
 	for i in labelTable:
-		f.write(i[:-1]+' '+ regAddress(labelTable[i]))
+		f.write(i[:-1]+' '+ addZeroes(labelTable[i]))
 #creating literalTable		
 with open('literalTable.txt','w') as f:
 	for i in literalTable:
-		f.write(i+' '+ regAddress(literalTable[i][0])+' '+regAddress(literalTable[i][1]))
+		f.write(i+' '+ addZeroes(literalTable[i][0])+' '+addZeroes(literalTable[i][1]))
 		
 #creating symbolTable		
 with open('symbolTable.txt','w') as f:
 	for i in symbolTable:
-		f.write(i+' '+ regAddress(symbolTable[i][0])+' '+regAddress(symbolTable[i][1]))
+		f.write(i+' '+ addZeroes(symbolTable[i][0])+' '+addZeroes(symbolTable[i][1]))
 
 #creating opcodeTable
 with open ('opcodeTable.txt','w') as f:
@@ -236,6 +251,9 @@ with open('labelTable.txt','r') as f:
 		labelTable[tmp[0]]=tmp[1]
 
 def check(name):
+	'''
+	Function to check if parameter is pseudo-Opcode 
+	'''
 	if (name in pseudoOpcodes):
 		return True
 	try:
@@ -245,21 +263,33 @@ def check(name):
 		return False
 
 def registerAddress(reg):
+	'''
+	Function to convert register number to it's binary address
+	'''
 	reg = reg[1:]
 	reg = bin(int(reg))[2:]
 	reg = '0'*(6-len(reg))+reg
 	return reg
 
 def byteCodeFunc(opcode,addressMode,operand):
+	'''
+	Function to return assembly instruction's binary output (space separated)
+	'''
 	return opcode+' '+addressMode+' '+operand
 
 def isOperandImmediate(operand):
+	'''
+	Function to check immediate operand
+	'''
 	if('#' in operand):
 		return True
 	else:
 		return False
 
 def isOperandLiteral(operand):
+	'''
+	Function to check literal operand
+	'''
 	try:
 		tmp=literalTable[operand]
 		return True
@@ -267,6 +297,9 @@ def isOperandLiteral(operand):
 		return False
 
 def isOperandSymbol(operand):
+	'''
+	Function to check symbol operand
+	'''
 	try:
 		tmp=symbolTable[operand]
 		return True
@@ -274,6 +307,9 @@ def isOperandSymbol(operand):
 		return False
 
 def isOperandLabel(operand):
+	'''
+	Function to check label operand
+	'''
 	try:
 		tmp=labelTable[operand]
 		return True
@@ -281,18 +317,26 @@ def isOperandLabel(operand):
 		return False
 
 def isOperandRegister(operand):
+	'''
+	Function to check register operand
+	'''
 	if(operand[0]=='R'):
 		return True
 	else:
 		return False
 
 def checkIllegalOpcode(opcode):
+	'''
+	Function to check ILLEGAL OpCode
+	'''
 	if(opcode not in opcodeSymbol):
-		print(opcode + ' is an ILLEGAL Opcode')
 		return True
 	return False
 
 def checkforCLAandSTP(opcode):
+	'''
+	Function to check if opcode is CLA/STP (for error handling)
+	'''
 	if(opcode == 'STP'):
 		global endFlag
 		endFlag=True
@@ -302,20 +346,38 @@ def checkforCLAandSTP(opcode):
 	return False
 
 locationCount=0
+startFlag=False
 
 with open('sourceCode.txt','r') as fr:
 	with open('machineCode.txt','w') as fw:
 		for line in fr:
-			locationCount+=1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
-			if(line == ''):
+			locationCount+=1
+			line=line.strip()
+			if(len(line)==0):
+				locationCount-=1
 				continue
+	
 			#check for comment line
 			elif (line[0]=='@'):
+				locationCount-=1
 				continue
 			elif (line[0]=='*'):
+				locationCount-=1
 				continue
 			else:
 				tmp = line.split()
+				if(tmp[0]=="START"):
+					if(startFlag):
+						pass
+					else:
+						if(len(tmp)==1):
+							locationCount = 0
+						else:
+							locationCount = int(tmp[1])
+							if(locationCount>31):
+								locationCount=0
+						startFlag=True
+					continue
 				#check for label line
 				if(':' in tmp[0]):
 					tmp[0]=tmp[1]
@@ -324,13 +386,14 @@ with open('sourceCode.txt','r') as fr:
 					del tmp[2]
 				#check for directive statement
 				if(check(tmp[0])):
+					locationCount-=1
 					continue
 				else:
 					if(checkIllegalOpcode(tmp[0])):
-						errorFlag=True
-					if(errorFlag):
+						print('ERROR at line: '+ str(locationCount))		
+						print(tmp[0] + ' is an ILLEGAL Opcode')
+						locationCount-=1
 						fw.write(' '+'\n')
-						errorFlag=False
 						continue
 
 					if(len(tmp)==1):
@@ -340,16 +403,19 @@ with open('sourceCode.txt','r') as fr:
 						else:
 							print('ERROR at line: '+ str(locationCount))
 							print(tmp[0] + ' requires 1 Operand')
+							locationCount-=1
 							errorFlag=True
 					else:
 						if(len(tmp)!=2):
 							print('ERROR at line: '+ str(locationCount))
 							print("Too many operand(s) for "+tmp[0])
+							locationCount-=1
 							errorFlag=True
 
 						if(checkforCLAandSTP(tmp[0])):
 							print('ERROR at line: '+ str(locationCount))
 							print(tmp[0] + ' requires 0 Operands')
+							locationCount-=1
 							errorFlag=True
 
 						if(isOperandLiteral(tmp[1])):
@@ -361,6 +427,7 @@ with open('sourceCode.txt','r') as fr:
 							if(tmp[0]=='DIV' and immediateValue==0):
 								print('ERROR at line: '+ str(locationCount))
 								print('Zero Division Error')
+								locationCount-=1
 								errorFlag=True
 							else:
 								byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+str(immediateValue)))
@@ -373,6 +440,8 @@ with open('sourceCode.txt','r') as fr:
 								if(registerNum<0 or registerNum>15):
 									print('ERROR at line: '+ str(locationCount))
 									print('Register Number should be from 0 to 15 (inclusive)')
+									locationCount-=1
+									errorFlag=True
 							except:
 								errorFlag=True 
 							else:
