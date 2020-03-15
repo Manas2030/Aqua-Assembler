@@ -1,0 +1,23 @@
+@ Program for FACTORIAL of a number !
+@ updating Y with the result of factorial.
+@ STORING 1 IN Z.
+START
+INP R1
+INP R4
+CLA
+LOOP: LAC R2
+MUL R1
+SAC R2
+LAC R1
+SUB #5
+SUB =d'7'
+SUB =h'a'
+SAC R1
+BRP LOOP
+LTORG
+Z DC '1'
+LTORG
+* =h'a' 
+* =d'7'
+STP
+BRP LOOP
