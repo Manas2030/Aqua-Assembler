@@ -281,7 +281,7 @@ def isOperandImmediate(operand):
 	'''
 	Function to check immediate operand
 	'''
-	if('#' in operand):
+	if('#'== operand[0]):
 		return True
 	else:
 		return False
@@ -423,14 +423,26 @@ with open('sourceCode.txt','r') as fr:
 						elif(isOperandLabel(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',labelTable[tmp[1]])
 						elif(isOperandImmediate(tmp[1])):
-							immediateValue=int(tmp[1][1:])
-							if(tmp[0]=='DIV' and immediateValue==0):
+							try:
+								immediateValue=int(tmp[1][1:])
+							except:
 								print('ERROR at line: '+ str(locationCount))
-								print('Zero Division Error')
+								print('Invalid Immediate Value')
 								locationCount-=1
 								errorFlag=True
 							else:
-								byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+str(immediateValue)))
+								if(tmp[0]=='DIV' and immediateValue==0):
+									print('ERROR at line: '+ str(locationCount))
+									print('Zero Division Error')
+									locationCount-=1
+									errorFlag=True
+								elif(immediateValue<0 or immediateValue >63):
+									print('ERROR at line: '+ str(locationCount))
+									print('Immediate value should lie between 0 and 63 (inclusive)')
+									locationCount-=1
+									errorFlag=True
+								else:
+									byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+str(immediateValue)))
 						elif(isOperandSymbol(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',symbolTable[tmp[1]][1])
 						# check operand for register in the last because symbol(or anything) could start with 'R'...	
