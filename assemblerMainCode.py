@@ -165,10 +165,8 @@ with open('sourceCode.txt','r') as fr:
 					usedCharLC.append(locationCount)
 
 		elif((len(tmp)>1 and tmp[1]=='CLA') or tmp[0]=='CLA'):
-			if(tmp[0]=='CLA'):
-				opcodeTable.append([tmp[0],opcodeSymbol[tmp[0]],'','1'])
-			else:
-				opcodeTable.append([tmp[1],opcodeSymbol[tmp[1]],'','1'])	
+			opcodeTable.append(['CLA','0000','','1'])
+					
 		locationCount = locationCount + 1	#set LC value
 		if(locationCount>64):		#LC value cannot exceed 63 as 6 bits assigned for memory address
 			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64. Error at locationCount: '+str(locationCount))
