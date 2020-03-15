@@ -50,10 +50,10 @@ with open('sourceCode.txt','r') as fr:
 					locationCount = 0
 				else:
 					locationCount = int(tmp[1])       	 #initialize the value of LC 
-					if(locationCount>31):
+					if(locationCount>63):
 						locationCount=0
 						print('ERROR at line: '+ str(locationCount))
-						print('Exceeded memory limit. Location counter cannot start from 31.')
+						print('Exceeded memory limit. Location counter cannot start from 63.')
 						locationCount-=1
 				startFlag=True
 		#check if comment
@@ -114,7 +114,7 @@ with open('sourceCode.txt','r') as fr:
 				
 		#check for literalTable
 		if(checkLTORG==1):
-			if(tmp[min(1,len(tmp)-1)][1]=="h"):
+			if(len(tmp)>1 and tmp[1][1]=="h"):
 				sg = 0
 				for i in tmp[1][3:-1]:
 					if(i in incorrectAlpha):
@@ -132,8 +132,8 @@ with open('sourceCode.txt','r') as fr:
 					declaredChar.append(tmp[1])
 					declaredCharLC.append(locationCount)		
 			
-			elif(tmp[min(1,len(tmp)-1)][1]=="'" or tmp[min(1,len(tmp)-1)][1]=="d"):
-				if(tmp[1][1]=="d"):
+			elif(len(tmp)>1 and (tmp[1][1]=="'" or tmp[1][1]=='d')):
+				if(tmp[1][1]=='d'):
 					sg = 0
 					for i in tmp[1][3:-1]:
 						if(i in incorrectAlpha or i in correctAlpha):
@@ -172,7 +172,10 @@ with open('sourceCode.txt','r') as fr:
 				locationCount-=1
 			else:
 				checkLTORG = 0
-
+		
+		elif(tmp[0]=='LTORG'):
+			checkLTORG = 1
+		
 		#updating the usedChar list
 		elif(len(tmp)>1 and (((tmp[0] in opcodeSymbol.keys()) and (tmp[0]!='CLA')) or (len(tmp)>2 and (tmp[1] in opcodeSymbol.keys()) and (tmp[1]!='CLA')))):
 			if(tmp[0] in opcodeSymbol.keys()): 
@@ -190,10 +193,7 @@ with open('sourceCode.txt','r') as fr:
 			opcodeTable.append(['CLA','0000','  ','1'])
 					
 		locationCount = locationCount + 1	#set LC value
-		if(locationCount>64):		#LC value cannot exceed 63 as 6 bits assigned for memory address
-			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64. Error at locationCount: '+str(locationCount))
-
-
+		
 #check if a symbol/literal/label hasn't been declared/initialized
 j=-1
 for i in usedChar:
@@ -205,7 +205,7 @@ for i in usedChar:
 n = len(declaredChar)
 for i in range(1,n):
 	if(declaredChar[i] in declaredChar[:i]):
-		print("Declaration error. "+declaredChar[i]+" initialized multiple times. Error at locationCount: "+str(declaredCharLC[i]))			
+		print("Declaration error. "+declaredChar[i]+" initialized multiple times. Error at locationCount: "+str(declaredCharLC[i]))				
 
 				
 def addZeroes(reg): 
