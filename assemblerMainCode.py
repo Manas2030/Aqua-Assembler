@@ -12,17 +12,17 @@ opcodeTable=[]
 # psudo opcodes = assembler directives
 pseudoOpcodes=['START','LTORG','DS','DC']
 byteCode=''
-endFlag=False
-startFlag=False
-errorFlag=False
+endFlag=False	# flag to check if program is ended
+startFlag=False	#flag to check start statement
+errorFlag=False #flag to check error encountered in pass 2
 usedChar=[]      #includes all literals, labels and symbols that have been used in the source code
 usedCharLC=[]
 declaredChar=[]	 #includes all literals, labels and symbols that have been declared in the source code
 declaredCharLC=[]
 registers=['R0','R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12','R13','R14','R15']
-checkLTORG = 0;
+checkLTORG = 0;	#flag to check LTORG symbol
 checkSTP = 0;
-correctAlpha = ['a','b','c','d','e','f']
+correctAlpha = ['a','b','c','d','e','f'] #correct alphabets for hexadecimal numbers
 incorrectAlpha = ['g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
 
 
@@ -35,28 +35,34 @@ with open('opcodeSymbolTable.txt','r') as f:
 with open('sourceCode.txt','r') as fr:
 	for line in fr:
 		line=line.strip()
+		# check for empty line
 		if(len(line)==0):
 			continue
 		tmp = line.split()
 
-		#set val of LC
+		#set val of Location counter
 		if(tmp[0]=="START"):
+			# check for multiple START directives
 			if(startFlag):
 				print('ERROR at line: '+ str(locationCount))
 				print('START already used, cannot initialize Location counter again')
 				locationCount-=1
 			else:
+				# check if value has been provided with START
 				if(len(tmp)==1):
 					locationCount = 0
 				else:
 					locationCount = int(tmp[1])       	 #initialize the value of LC 
+
+					# check if location counter's value can be represented in 6 bits 
 					if(locationCount>63):
 						locationCount=0
 						print('ERROR at line: '+ str(locationCount))
 						print('Exceeded memory limit. Location counter cannot start from 63.')
 						locationCount-=1
 				startFlag=True
-		#check if comment
+
+		#check if comment line
 		elif(tmp[0]=="@"):
 			locationCount = locationCount-1
 		elif(tmp[0]=="STP"):                             #raises an error if STP used multiple times
@@ -243,7 +249,7 @@ with open ('symbolTable.txt','r') as f:
 with open ('literalTable.txt','r') as f:
 	for line in f:
 		tmp=line.split()
-		literalTable[tmp[0]]=[[tmp[1],tmp[2]]]
+		literalTable[tmp[0]]=[tmp[1],tmp[2]]
 
 with open('labelTable.txt','r') as f:
 	for line in f:
@@ -351,21 +357,29 @@ startFlag=False
 with open('sourceCode.txt','r') as fr:
 	with open('machineCode.txt','w') as fw:
 		for line in fr:
+
+			# incrementing location counter by 1
 			locationCount+=1
 			line=line.strip()
+
+			# check for empty line 
 			if(len(line)==0):
 				locationCount-=1
 				continue
 	
-			#check for comment line
+			# check for comment line
 			elif (line[0]=='@'):
 				locationCount-=1
 				continue
+
+			# check for literal definition	
 			elif (line[0]=='*'):
 				locationCount-=1
 				continue
 			else:
 				tmp = line.split()
+
+				# initialize the value of the location counter
 				if(tmp[0]=="START"):
 					if(startFlag):
 						pass
@@ -378,6 +392,7 @@ with open('sourceCode.txt','r') as fr:
 								locationCount=0
 						startFlag=True
 					continue
+
 				#check for label line
 				if(':' in tmp[0]):
 					tmp[0]=tmp[1]
@@ -389,6 +404,7 @@ with open('sourceCode.txt','r') as fr:
 					locationCount-=1
 					continue
 				else:
+					# check for legal opcode
 					if(checkIllegalOpcode(tmp[0])):
 						print('ERROR at line: '+ str(locationCount))		
 						print(tmp[0] + ' is an ILLEGAL Opcode')
@@ -406,12 +422,14 @@ with open('sourceCode.txt','r') as fr:
 							locationCount-=1
 							errorFlag=True
 					else:
+						# check if multiple operands have been provided to opcode
 						if(len(tmp)!=2):
 							print('ERROR at line: '+ str(locationCount))
 							print("Too many operand(s) for "+tmp[0])
 							locationCount-=1
 							errorFlag=True
 
+						# check if operand has been provided to CLA or STP
 						if(checkforCLAandSTP(tmp[0])):
 							print('ERROR at line: '+ str(locationCount))
 							print(tmp[0] + ' requires 0 Operands')
@@ -419,11 +437,13 @@ with open('sourceCode.txt','r') as fr:
 							errorFlag=True
 
 						if(isOperandLiteral(tmp[1])):
-							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',literalTable[tmp[1]])
+							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',literalTable[tmp[1]][1])
 						elif(isOperandLabel(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',labelTable[tmp[1]])
 						elif(isOperandImmediate(tmp[1])):
+
 							try:
+								#check for correct immediate value format
 								immediateValue=int(tmp[1][1:])
 							except:
 								print('ERROR at line: '+ str(locationCount))
@@ -431,11 +451,13 @@ with open('sourceCode.txt','r') as fr:
 								locationCount-=1
 								errorFlag=True
 							else:
+								# check for zero division Error
 								if(tmp[0]=='DIV' and immediateValue==0):
 									print('ERROR at line: '+ str(locationCount))
 									print('Zero Division Error')
 									locationCount-=1
 									errorFlag=True
+								# check if immediate value can be represented in 6 bits
 								elif(immediateValue<0 or immediateValue >63):
 									print('ERROR at line: '+ str(locationCount))
 									print('Immediate value should lie between 0 and 63 (inclusive)')
@@ -443,9 +465,11 @@ with open('sourceCode.txt','r') as fr:
 									errorFlag=True
 								else:
 									byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'00',registerAddress('R'+str(immediateValue)))
+
 						elif(isOperandSymbol(tmp[1])):
 							byteCode=byteCodeFunc(opcodeSymbol[tmp[0]],'01',symbolTable[tmp[1]][1])
 						# check operand for register in the last because symbol(or anything) could start with 'R'...	
+
 						elif(isOperandRegister(tmp[1])):
 							try:
 								registerNum=int(tmp[1][1:])
@@ -461,13 +485,17 @@ with open('sourceCode.txt','r') as fr:
 						else:
 							continue
 
+					# if error flag is true, skip a line in the machineCode file
 					if(errorFlag):
 						global bytecode
 						byteCode = ' '
+						# put error flag = false to report next error
 						errorFlag=False
 
 					fw.write(byteCode+'\n')
-					
+
+# if program is not ended, report error					
 if(endFlag == False):
 	print('ERROR at line: '+ str(locationCount))
 	print('END statement missing. Use STP as well')
+print(literalTable)
