@@ -46,11 +46,11 @@ with open('sourceCode.txt','r') as fr:
 		elif(tmp[0]=="@"):
 			locationCount = locationCount-1
 		elif(tmp[0]=="STP"):                             #raises an error if STP used multiple times
-			opcodeTable.append(['STP','1100','','1'])
+			opcodeTable.append(['STP','1100','  ','1'])
 			if(checkSTP==0):
 				checkSTP = 1
 			else:
-				print("Declarative statement error. STP used multiple times.")	
+				print("Declarative statement error. STP used multiple times. Error at locationCount: "+locationCount)	
 
 		#check for labelTable
 		elif(tmp[0][-1]==":"):
@@ -165,7 +165,7 @@ with open('sourceCode.txt','r') as fr:
 					usedCharLC.append(locationCount)
 
 		elif((len(tmp)>1 and tmp[1]=='CLA') or tmp[0]=='CLA'):
-			opcodeTable.append(['CLA','0000','','1'])
+			opcodeTable.append(['CLA','0000','  ','1'])
 					
 		locationCount = locationCount + 1	#set LC value
 		if(locationCount>64):		#LC value cannot exceed 63 as 6 bits assigned for memory address
