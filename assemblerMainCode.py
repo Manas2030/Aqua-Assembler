@@ -223,16 +223,16 @@ def addZeroes(reg):
 #creating labelTable
 with open('labelTable.txt','w') as f:
 	for i in labelTable:
-		f.write(i[:-1]+' '+ addZeroes(labelTable[i]))
+		f.write(i[:-1]+' '+ addZeroes(labelTable[i])+'\n')
 #creating literalTable		
 with open('literalTable.txt','w') as f:
 	for i in literalTable:
-		f.write(i+' '+ addZeroes(literalTable[i][0])+' '+addZeroes(literalTable[i][1]))
+		f.write(i+' '+ addZeroes(literalTable[i][0])+' '+addZeroes(literalTable[i][1])+'\n')
 		
 #creating symbolTable		
 with open('symbolTable.txt','w') as f:
 	for i in symbolTable:
-		f.write(i+' '+ addZeroes(symbolTable[i][0])+' '+addZeroes(symbolTable[i][1]))
+		f.write(i+' '+ addZeroes(symbolTable[i][0])+' '+addZeroes(symbolTable[i][1])+'\n')
 
 #creating opcodeTable
 with open ('opcodeTable.txt','w') as f:
@@ -374,7 +374,6 @@ with open('sourceCode.txt','r') as fr:
 
 			# check for literal definition	
 			elif (line[0]=='*'):
-				locationCount-=1
 				continue
 			else:
 				tmp = line.split()
@@ -401,7 +400,6 @@ with open('sourceCode.txt','r') as fr:
 					del tmp[2]
 				#check for directive statement
 				if(check(tmp[0])):
-					locationCount-=1
 					continue
 				else:
 					# check for legal opcode
@@ -433,6 +431,12 @@ with open('sourceCode.txt','r') as fr:
 						if(checkforCLAandSTP(tmp[0])):
 							print('ERROR at line: '+ str(locationCount))
 							print(tmp[0] + ' requires 0 Operands')
+							locationCount-=1
+							errorFlag=True
+
+						if(tmp[0]=='INP' and (not isOperandRegister(tmp[1]))):
+							print('ERROR at line: '+ str(locationCount))
+							print('INP can be used only with the regisers')
 							locationCount-=1
 							errorFlag=True
 
@@ -498,4 +502,3 @@ with open('sourceCode.txt','r') as fr:
 if(endFlag == False):
 	print('ERROR at line: '+ str(locationCount))
 	print('END statement missing. Use STP as well')
-print(literalTable)
