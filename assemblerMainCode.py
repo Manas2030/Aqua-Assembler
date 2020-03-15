@@ -497,6 +497,8 @@ with open('sourceCode.txt','r') as fr:
 						errorFlag=False
 
 					fw.write(byteCode+'\n')
+					if(endFlag==True):
+						break
 
 # if program is not ended, report error					
 if(endFlag == False):
