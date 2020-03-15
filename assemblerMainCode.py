@@ -1,4 +1,4 @@
-# ASSEMBLER PROJECT
+# Aqua-Assembler
 # MANAS GUPTA
 # PRACHI GOYAL
 
@@ -9,7 +9,8 @@ symbolTable={}
 labelTable={}
 literalTable={}
 opcodeTable=[]
-pseudoOpcodes=['START','LTORG']
+# psudo opcodes = assembler directives
+pseudoOpcodes=['START','LTORG','DS','DC']
 byteCode=''
 endFlag=False
 errorFlag=False
@@ -17,7 +18,7 @@ usedChar=[]      #includes all literals, labels and symbols that have been used 
 usedCharLC=[]
 declaredChar=[]	 #includes all literals, labels and symbols that have been declared in the source code
 declaredCharLC=[]
-registers=['R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12','R13','R14','R15','R16']
+registers=['R0','R1','R2','R3','R4','R5','R6','R7','R8','R9','R10','R11','R12','R13','R14','R15']
 checkLTORG = 0;
 checkSTP = 0;
 correctAlpha = ['a','b','c','d','e','f']
@@ -209,6 +210,11 @@ with open('symbolTable.txt','w') as f:
 	for i in symbolTable:
 		f.write(i+' '+ regAddress(symbolTable[i][0])+' '+regAddress(symbolTable[i][1]))
 
+#creating opcodeTable
+with open ('opcodeTable.txt','w') as f:
+	for i in opcodeTable:
+		f.write(i[0]+' '+i[1]+' '+i[2]+' '+i[3]+'\n')
+
 # PASS TWO
 
 with open ('symbolTable.txt','r') as f:
@@ -272,7 +278,7 @@ def isOperandLabel(operand):
 		return False
 
 def isOperandRegister(operand):
-	if(operand[0]=='R' or operand[0]=='r'):
+	if(operand[0]=='R'):
 		return True
 	else:
 		return False
@@ -361,9 +367,9 @@ with open('sourceCode.txt','r') as fr:
 						elif(isOperandRegister(tmp[1])):
 							try:
 								registerNum=int(tmp[1][1:])
-								if(registerNum<0 or registerNum>31):
+								if(registerNum<0 or registerNum>15):
 									print('ERROR at line: '+ str(locationCount))
-									print('Register Number should be between 0 to 31 (inclusive)')
+									print('Register Number should be from 0 to 15 (inclusive)')
 							except:
 								errorFlag=True 
 							else:
