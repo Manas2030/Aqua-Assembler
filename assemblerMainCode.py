@@ -37,12 +37,16 @@ with open('sourceCode.txt','r') as fr:
 
 		#set val of LC
 		if(tmp[0]=="START"):
-			locationCount = int(tmp[1])       	 #initialize the value of LC 
+			if(len(tmp)==1):
+				locationCount = 0
+			else:
+				locationCount = int(tmp[1])       	 #initialize the value of LC 
 
 		#check if comment
 		elif(tmp[0]=="@"):
 			locationCount = locationCount-1
 		elif(tmp[0]=="STP"):                             #raises an error if STP used multiple times
+			opcodeTable.append(['STP','1100','','1'])
 			if(checkSTP==0):
 				checkSTP = 1
 			else:
@@ -52,6 +56,7 @@ with open('sourceCode.txt','r') as fr:
 		elif(tmp[0][-1]==":"):
 			labelTable[tmp[0]]= bin(locationCount)
 			declaredChar.append(tmp[0][:-1])
+			declaredCharLC.append(locationCount)
 		
 		#check for symbolTable
 		##decimal
@@ -161,9 +166,9 @@ with open('sourceCode.txt','r') as fr:
 
 		elif((len(tmp)>1 and tmp[1]=='CLA') or tmp[0]=='CLA'):
 			if(tmp[0]=='CLA'):
-				opcodeTable.append([tmp[0],opcodeSymbol[tmp[0]],'','1','2'])
+				opcodeTable.append([tmp[0],opcodeSymbol[tmp[0]],'','1'])
 			else:
-				opcodeTable.append([tmp[1],opcodeSymbol[tmp[1]],'','1','2'])	
+				opcodeTable.append([tmp[1],opcodeSymbol[tmp[1]],'','1'])	
 		locationCount = locationCount + 1	#set LC value
 		if(locationCount>64):		#LC value cannot exceed 63 as 6 bits assigned for memory address
 			print('Exceeded memory limit. 6 bits allocated for memory address and thus maximum number of instructions cannot exceed 64. Error at locationCount: '+str(locationCount))
